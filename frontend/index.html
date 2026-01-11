@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Titanic Survival Predictor</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <style>
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: 'Inter', system-ui, sans-serif;
+      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: #fff;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 900px;
+      padding: 2rem;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 0.5rem;
+    }
+
+    p.subtitle {
+      text-align: center;
+      opacity: 0.8;
+      margin-bottom: 2rem;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(12px);
+      border-radius: 16px;
+      padding: 2rem;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    input {
+      padding: 0.75rem;
+      border-radius: 10px;
+      border: none;
+      outline: none;
+      font-size: 0.9rem;
+    }
+
+    button {
+      width: 100%;
+      padding: 0.9rem;
+      border-radius: 12px;
+      border: none;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      background: #00e5ff;
+      color: #00343d;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(0,229,255,0.3);
+    }
+
+    .results {
+      margin-top: 2rem;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .result-card {
+      background: rgba(0,0,0,0.35);
+      border-radius: 14px;
+      padding: 1.5rem;
+      text-align: center;
+    }
+
+    .result-card h3 {
+      margin-bottom: 0.5rem;
+    }
+
+    .status {
+      font-size: 1.4rem;
+      font-weight: bold;
+      margin-top: 0.5rem;
+    }
+
+    .alive {
+      color: #4caf50;
+    }
+
+    .dead {
+      color: #f44336;
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 1.5rem;
+      font-size: 0.8rem;
+      opacity: 0.6;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>🚢 Titanic Survival Predictor</h1>
+    <p class="subtitle">Logistic Regression vs Decision Tree</p>
+
+    <div class="card">
+      <div class="form-grid">
+        <input id="pclass" placeholder="Pclass (1, 2, 3)">
+        <input id="sex" placeholder="Sex (male/female)">
+        <input id="age" placeholder="Age">
+        <input id="sibsp" placeholder="Siblings/Spouses">
+        <input id="parch" placeholder="Parents/Children">
+        <input id="fare" placeholder="Fare">
+        <input id="embarked" placeholder="Embarked (S/C/Q)">
+      </div>
+
+      <button onclick="predict()">Predict Survival</button>
+
+      <div class="results">
+        <div class="result-card">
+          <h3>📈 Logistic Regression</h3>
+          <div id="logisticResult" class="status">—</div>
+        </div>
+
+        <div class="result-card">
+          <h3>🌳 Decision Tree</h3>
+          <div id="treeResult" class="status">—</div>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      Deployed with FastAPI · Hugging Face · Vercel
+    </footer>
+  </div>
+
+  <script>
+    const BASE_URL = "https://zikramohammed-titanic-ml-api.hf.space";
+
+    async function predict() {
+      const payload = {
+        Pclass: Number(pclass.value),
+        Sex: sex.value,
+        Age: Number(age.value),
+        SibSp: Number(sibsp.value),
+        Parch: Number(parch.value),
+        Fare: Number(fare.value),
+        Embarked: embarked.value
+      };
+
+      try {
+        const [logRes, treeRes] = await Promise.all([
+          fetch(`${BASE_URL}/predict/logistic`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+          }),
+          fetch(`${BASE_URL}/predict/tree`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+          })
+        ]);
+
+        const logJson = await logRes.json();
+        const treeJson = await treeRes.json();
+
+        displayResult("logisticResult", logJson.survived);
+        displayResult("treeResult", treeJson.survived);
+
+      } catch (err) {
+        alert("Something broke 😭 Check the API or inputs.");
+        console.error(err);
+      }
+    }
+
+    function displayResult(elementId, value) {
+      const el = document.getElementById(elementId);
+      if (value === 1) {
+        el.textContent = "Survived ✅";
+        el.className = "status alive";
+      } else {
+        el.textContent = "Did Not Survive ❌";
+        el.className = "status dead";
+      }
+    }
+  </script>
+</body>
+</html>
