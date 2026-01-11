@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 import pandas as pd
 import joblib
-from app.schemas import PassengerData
+from app.schema import PassengerData
 
 app = FastAPI()
 
